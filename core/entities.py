@@ -23,12 +23,7 @@ class Symbol:
     def coord(self, value) -> None:
         if isinstance(value, Coord):
             self._coord = value
-            self._row_ref._window_ref.text_coords_x.append(
-                value.x
-            )
-            self._row_ref._window_ref.text_coords_y.append(
-                value.y
-            )
+            self._row_ref._window_ref.text_coords.append(value)
 
     @coord.deleter
     def coord(self) -> None:
@@ -50,9 +45,14 @@ class Row:
 @dataclass
 class Window:
     rows: list[Row]
-    text_coords_x: list[int] = field(default_factory=list)
-    text_coords_y: list[int] = field(default_factory=list)
+    text_coords: list[Coord] = field(default_factory=list)
 
     def next_row(self, start_row_n: int):
         for row in self.rows[start_row_n:]:
             yield row
+
+    def is_coord_exist(self, x: int, y: int) -> bool:
+        for coord in self.text_coords:
+            if coord.x == x and coord.y == y:
+                return True
+        return False
