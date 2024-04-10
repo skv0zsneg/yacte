@@ -18,8 +18,8 @@ class DisplayManager:
         self.window: Window
         self.curses_win: '_CursesWindow'
 
-        self._start_row_n = 0
-        self._full_displayed_rows = 0
+        self._start_row_number = 0
+        self._displayed_rows: list[Row] = []
 
     def launch(self, file_path: str) -> None:
         self.file_path = file_path
@@ -46,6 +46,7 @@ class DisplayManager:
         self._move_cursor_to_begin()
 
         while True:
+            # logging.info(self._displayed_rows)
             self.curses_win.refresh()
             self._action_handler(
                 key=curses_win.getch(),
@@ -84,11 +85,11 @@ class DisplayManager:
 
     def _display_text(self) -> None:
         self._clear_text()
-        self._full_displayed_rows = 0
 
+        self._displayed_rows = []
         max_y, max_x = self.curses_win.getmaxyx()
         ptr_x, ptr_y = 0, 1
-        row_gen = self.window.next_row(self._start_row_n)
+        row_gen = self.window.next_row(self._start_row_number)
         is_symbols_finished = True
 
         while ptr_y < max_y-1:
@@ -97,6 +98,7 @@ class DisplayManager:
                     row = next(row_gen)
                     ptr_y += 1
                     ptr_x = 0
+                    self._displayed_rows.append(row)
             except StopIteration:
                 return
 
@@ -107,7 +109,6 @@ class DisplayManager:
                 symbol = next(symbol_gen)
             except StopIteration:
                 is_symbols_finished = True
-                self._full_displayed_rows += 1
                 continue
 
             try:
@@ -137,10 +138,7 @@ class DisplayManager:
             _, max_x = self.curses_win.getmaxyx()
             if current_x == max_x-1:
                 self.curses_win.move(current_y+1, 0)
-            if (
-                current_x+1 in self.window.text_coords_x and
-                current_y in self.window.text_coords_y
-            ):
+            elif self.window.is_coord_exist(current_x+1, current_y):
                 self.curses_win.move(current_y, current_x+1)
         except curses.error:
             pass
@@ -151,10 +149,7 @@ class DisplayManager:
             if current_x == 0 and current_y != 2:
                 _, max_x = self.curses_win.getmaxyx()
                 self.curses_win.move(current_y-1, max_x-1)
-            elif (
-                current_x-1 in self.window.text_coords_x and
-                current_y in self.window.text_coords_y
-            ):
+            elif self.window.is_coord_exist(current_x-1, current_y):
                 self.curses_win.move(current_y, current_x-1)
         except curses.error:
             pass
@@ -163,14 +158,17 @@ class DisplayManager:
         current_y, current_x = self.curses_win.getyx()
         try:
             if current_y != 2:
-                if (
-                    current_x in self.window.text_coords_x and
-                    current_y-1 in self.window.text_coords_y
-                ):
+                if self.window.is_coord_exist(current_x, current_y-1):
                     self.curses_win.move(current_y-1, current_x)
-            elif current_y == 2 and self._start_row_n != 0:
-                self._start_row_n -= 1
+            elif current_y == 2 and self._start_row_number != 0:
+                self._start_row_number -= 1
                 self._display_text()
+
+                first_row_first_symbol = self._displayed_rows[0].symbols[0]
+                self.curses_win.move(
+                    first_row_first_symbol.coord.y,
+                    first_row_first_symbol.coord.x,
+                )
         except curses.error:
             pass
 
@@ -178,20 +176,21 @@ class DisplayManager:
         current_y, current_x = self.curses_win.getyx()
         max_y, _ = self.curses_win.getmaxyx()
         try:
-            if (
-                current_x in self.window.text_coords_x and
-                current_y+1 in self.window.text_coords_y
-            ):
+            if self.window.is_coord_exist(current_x, current_y+1):
                 self.curses_win.move(current_y+1, current_x)
             elif (
-                current_y == max_y - 2 and
-                self._full_displayed_rows < len(self.window.rows) - 1
+                current_y == max_y - 2  # and
+                # self._full_displayed_rows < len(self.window.rows) - 1
             ):
-                self._start_row_n += 1
+                self._start_row_number += 1
                 self._clear_text()
                 self._display_text()
-                # TODO: realize scroll down
-                self.curses_win.move(max_y - 2, curses.COLS+5)
+
+                last_row_first_symbol = self._displayed_rows[-1].symbols[0]
+                self.curses_win.move(
+                    last_row_first_symbol.coord.y,
+                    last_row_first_symbol.coord.x,
+                )
         except curses.error:
             pass
 
@@ -205,8 +204,10 @@ class DisplayManager:
             pass
 
     def _clear_text(self):
-        self.curses_win.move(2, 0)
-        self.curses_win.clrtoeol()
+        self.curses_win.clear()
+        self.curses_win.refresh()
+        self._display_sys_info_board()
+        self._display_file_info()
 
     def _move_cursor_to_begin(self):
         self.curses_win.move(2, 0)
