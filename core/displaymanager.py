@@ -9,7 +9,7 @@ from .filemanager import read_file
 if TYPE_CHECKING:
     from curses import _CursesWindow
 
-logging.basicConfig(filename="./pycte.log", level=logging.DEBUG)
+logging.basicConfig(filename="./yacte.log", level=logging.DEBUG)
 
 
 class DisplayManager:
