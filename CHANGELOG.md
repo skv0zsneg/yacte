@@ -13,5 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Entities for file inputs and window displaying.
 - Filemanager to read file.
 - Visualize the file input on console with curse lib by display manager.
-- Add base handlers for keys up, down, left, right, backspace, etc.
-- Add test text files.
+- Base handlers for keys up, down, left, right, backspace, etc.
+- Test text files.
+- Change log.
+- License.
