@@ -1,32 +1,19 @@
-from models import Terminal, FileSymbol
+from .models import Cursor, Terminal
 
 
-def fill_terminal(terminal: Terminal, symbols: list[FileSymbol]) -> Terminal:
-    """Filling terminal with symbols.
+def create_terminal(width: int, length: int) -> Terminal:
+    """Creating new terminal with empty content.
 
-    :param terminal: Terminal
-    :param symbols: List of symbols in right order
-    :return: Terminal with giving symbols
+    :param size_x: Terminal width
+    :param size_y: Terminal height
+    :return: New terminal
     """
-    if not symbols:
-        return terminal
+    content = None
+    if width > 0 and length > 0:
+        content = [[None for _ in range(width)] for _ in range(length)]
 
-    print(terminal.content)
-    term_ptr_x, term_ptr_y = 0, 0
-    last_symbol_line = symbols[0].line
-    for symbol in symbols:
-        if last_symbol_line < symbol.line:
-            term_ptr_y += symbol.line - last_symbol_line
-            term_ptr_x = 0
-        if term_ptr_x >= terminal.size_x:
-            term_ptr_y += 1
-            term_ptr_x = 0
-        if term_ptr_y >= terminal.size_y:
-            break
-
-        terminal.content[term_ptr_y][term_ptr_x] = symbol
-
-        term_ptr_x += 1
-        last_symbol_line = symbol.line
-    print(terminal.content)
-    return terminal
+    new_terminal = Terminal(
+        cursor=Cursor(0, 0),
+        content=content,
+    )
+    return new_terminal
