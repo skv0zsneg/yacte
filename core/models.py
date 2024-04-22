@@ -1,5 +1,8 @@
 from dataclasses import dataclass
 
+from .exceptions import (CantSetCursor, ContentPositionDoesntExist,
+                         TerminalContentIsEmpty)
+
 
 @dataclass
 class Terminal:
@@ -44,6 +47,36 @@ class Terminal:
 
             term_ptr_x += 1
             last_symbol_line = symbol.line
+
+    def cursor_set_position(self, x: int, y: int) -> None:
+        if not self.content:
+            raise TerminalContentIsEmpty()
+        try:
+            position = self.content[y][x]
+        except IndexError:
+            raise ContentPositionDoesntExist()
+
+        if (
+            position or
+            (x == 0 and y > 0 and self.content[y-1][-1]) or
+            (x > 0 and self.content[y][x-1])
+        ):
+            self.cursor.x = x
+            self.cursor.y = y
+        else:
+            raise CantSetCursor()
+
+    def cursor_move_right(self) -> None:
+        pass
+
+    def cursor_move_left(self) -> None:
+        pass
+
+    def cursor_move_down(self) -> None:
+        pass
+
+    def cursor_move_up(self) -> None:
+        pass
 
 
 @dataclass

@@ -53,12 +53,26 @@ class LinuxDisplayer(BaseDisplayer):
             self._exit()
         elif key == curses.KEY_RESIZE:
             self._resize()
+        elif key == curses.KEY_RIGHT:
+            self._move_cursor_right()
+        elif key == curses.KEY_LEFT:
+            self._move_cursor_left()
+        elif key == curses.KEY_DOWN:
+            self._move_cursor_down()
+        elif key == curses.KEY_UP:
+            self._move_cursor_up()
+        elif key == curses.KEY_BACKSPACE:
+            self._delete_char()
+        else:
+            self._add_char()
 
     def _display_terminal_content(self) -> None:
         if not self._terminal:
             raise ValueError("Terminal is not initialized.")
         if not self._terminal.content:
             raise ValueError("Terminal content is empty.")
+        if not self._screen:
+            raise ValueError("Curse window object is't created.")
 
         for x in range(self._terminal.width):
             for y in range(self._terminal.length):
@@ -70,10 +84,12 @@ class LinuxDisplayer(BaseDisplayer):
 
     # actions
 
-    def _exit(self):
+    def _exit(self) -> None:
+        """Close text editor, exit program"""
         exit(1)
 
-    def _resize(self):
+    def _resize(self) -> None:
+        """Action on terminal window resizing"""
         if not self._screen:
             raise ValueError("Curse window object is't created.")
 
@@ -83,3 +99,51 @@ class LinuxDisplayer(BaseDisplayer):
         self._terminal.fill_terminal(self._file_reader.read_all())
         self._display_terminal_content()
         self._screen.refresh()
+
+    def _move_cursor_right(self) -> None:
+        """Move terminal cursor right"""
+        if not self._terminal:
+            raise ValueError("Terminal is not initialized.")
+        if not self._screen:
+            raise ValueError("Curse window object is't created.")
+        # TODO: Uncomment when created
+        # self._terminal.cursor_move_right()
+        self._screen.move(self._terminal.cursor.y, self._terminal.cursor.x)
+
+    def _move_cursor_left(self) -> None:
+        """Move terminal cursor left"""
+        if not self._terminal:
+            raise ValueError("Terminal is not initialized.")
+        if not self._screen:
+            raise ValueError("Curse window object is't created.")
+        # TODO: Uncomment when created
+        # self._terminal.cursor_move_left()
+        self._screen.move(self._terminal.cursor.y, self._terminal.cursor.x)
+
+    def _move_cursor_up(self) -> None:
+        """Move terminal cursor up"""
+        if not self._terminal:
+            raise ValueError("Terminal is not initialized.")
+        if not self._screen:
+            raise ValueError("Curse window object is't created.")
+        # TODO: Uncomment when created
+        # self._terminal.cursor_move_up()
+        self._screen.move(self._terminal.cursor.y, self._terminal.cursor.x)
+
+    def _move_cursor_down(self) -> None:
+        """Move terminal cursor down"""
+        if not self._terminal:
+            raise ValueError("Terminal is not initialized.")
+        if not self._screen:
+            raise ValueError("Curse window object is't created.")
+        # TODO: Uncomment when created
+        # self._terminal.cursor_move_right()
+        self._screen.move(self._terminal.cursor.y, self._terminal.cursor.x)
+
+    def _delete_char(self) -> None:
+        """Delete char where cursor located"""
+        pass
+
+    def _add_char(self) -> None:
+        """Add char from where cursor located"""
+        pass

@@ -1,9 +1,12 @@
+# flake8: noqa
+
 import sys
 
 import pytest
 
 sys.path.insert(0, "core")
 
+from core.exceptions import CantSetCursor
 from core.models import Cursor, FileSymbol, Terminal
 from core.repositories import create_terminal
 
@@ -28,6 +31,30 @@ class TestTerminalActions:
         return Terminal(
             cursor=Cursor(x=0, y=0),
             content=None,
+        )
+
+    @pytest.fixture
+    def partly_filled_terminal_3_x_4(self) -> Terminal:
+        return Terminal(
+            cursor=Cursor(x=0, y=0),
+            content=[
+                [FileSymbol('T', 0, 0), FileSymbol('e', 0, 0), None],
+                [None, None, None],
+                [FileSymbol('s', 0, 0), FileSymbol('t', 0, 0), None],
+                [FileSymbol('s', 0, 0), FileSymbol('1', 0, 0), None],
+            ],
+        )
+
+    @pytest.fixture
+    def partly_filled_terminal_4_x_4(self) -> Terminal:
+        return Terminal(
+            cursor=Cursor(x=0, y=0),
+            content=[
+                [FileSymbol('T', 0, 0), FileSymbol('e', 0, 0), None, None],
+                [FileSymbol('\n', 0, 0), None, None],
+                [FileSymbol('s', 0, 0), FileSymbol('t', 0, 0), None, None],
+                [FileSymbol('s', 0, 0), FileSymbol('1', 0, 0), None, None],
+            ],
         )
 
     def test_perfect_terminal_fill(self, empty_terminal_5_x_5: Terminal):
@@ -153,3 +180,40 @@ class TestTerminalActions:
     def test_create_0_x_1_terminal(self):
         new_terminal = create_terminal(0, 1)
         assert new_terminal.content is None
+
+    def test_set_cursor_position_on_symbol_with_left_symbol(self, partly_filled_terminal_3_x_4: Terminal):
+        partly_filled_terminal_3_x_4.cursor_set_position(1, 3)
+        assert partly_filled_terminal_3_x_4.cursor.x == 1
+        assert partly_filled_terminal_3_x_4.cursor.y == 3
+
+    def test_set_cursor_position_on_None_with_left_is_symbol(self, partly_filled_terminal_3_x_4: Terminal):
+        partly_filled_terminal_3_x_4.cursor_set_position(2, 2)
+        assert partly_filled_terminal_3_x_4.cursor.x == 2
+        assert partly_filled_terminal_3_x_4.cursor.y == 2
+
+    def test_set_cursor_position_on_None_with_left_is_symbol_on_line_above(self, partly_filled_terminal_3_x_4: Terminal):
+        partly_filled_terminal_3_x_4.cursor_set_position(0, 2)
+        assert partly_filled_terminal_3_x_4.cursor.x == 0
+        assert partly_filled_terminal_3_x_4.cursor.y == 2
+
+    def test_set_cursor_position_on_None_without_neighbors(self, partly_filled_terminal_3_x_4: Terminal):
+        with pytest.raises(CantSetCursor):
+            partly_filled_terminal_3_x_4.cursor_set_position(1, 1)
+
+    def test_set_cursor_position_on_None_without_neighbors_on_line_above(self, partly_filled_terminal_3_x_4: Terminal):
+        with pytest.raises(CantSetCursor):
+            partly_filled_terminal_3_x_4.cursor_set_position(0, 1)
+
+    def test_move_cursor_right_(self, partly_filled_terminal_4_x_4: Terminal):
+        partly_filled_terminal_4_x_4.cursor.x = 2
+        partly_filled_terminal_4_x_4.cursor.y = 0
+        partly_filled_terminal_4_x_4.cursor_move_right()
+        assert partly_filled_terminal_4_x_4.cursor.x == 0
+        assert partly_filled_terminal_4_x_4.cursor.y == 1
+
+    def test_move_cursor_right_in_dead_end(self, partly_filled_terminal_4_x_4: Terminal):
+        partly_filled_terminal_4_x_4.cursor.x = 3
+        partly_filled_terminal_4_x_4.cursor.y = 3
+        partly_filled_terminal_4_x_4.cursor_move_right()
+        assert partly_filled_terminal_4_x_4.cursor.x == 3
+        assert partly_filled_terminal_4_x_4.cursor.y == 3
